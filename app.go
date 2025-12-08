@@ -1096,6 +1096,13 @@ func (a *App) applyAutoStart(enabled bool) error {
 	if runtime.GOOS != "windows" {
 		return nil
 	}
+	// Skip autostart writes during dev to avoid polluting Startup with wails-base-fresh-dev.exe.
+	if env := strings.ToLower(strings.TrimSpace(os.Getenv("WAILS_ENV"))); env == "dev" {
+		return nil
+	}
+	if exe, _ := os.Executable(); strings.Contains(strings.ToLower(exe), "wails-base-fresh") {
+		return nil
+	}
 	appData := os.Getenv("APPDATA")
 	if strings.TrimSpace(appData) == "" {
 		return errors.New("APPDATA not set")
@@ -1110,6 +1117,14 @@ func (a *App) applyAutoStart(enabled bool) error {
 	}
 	batPath := filepath.Join(startupDir, "calendar-widget-start.bat")
 	if enabled {
+		if target, _ := readStartupTarget(batPath); target != "" {
+			if strings.EqualFold(filepath.Clean(target), filepath.Clean(exePath)) {
+				return nil
+			}
+			if _, err := os.Stat(target); err != nil && errors.Is(err, os.ErrNotExist) {
+				// stale entry, overwrite below
+			}
+		}
 		content := fmt.Sprintf(`@echo off
 start "" "%s"
 `, exePath)
@@ -1119,4 +1134,28 @@ start "" "%s"
 		return err
 	}
 	return nil
+}
+
+// readStartupTarget extracts the target path from an existing autostart .bat.
+func readStartupTarget(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(strings.ToLower(line), "start") {
+			continue
+		}
+		parts := strings.SplitN(line, "\"", 3)
+		if len(parts) >= 3 && strings.TrimSpace(parts[1]) != "" {
+			return parts[1], nil
+		}
+		fields := strings.Fields(line)
+		if len(fields) >= 2 {
+			return fields[len(fields)-1], nil
+		}
+	}
+	return "", nil
 }
