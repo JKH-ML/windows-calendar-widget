@@ -1,5 +1,10 @@
 # Calendar Widget
 
+[![Demo video](https://img.youtube.com/vi/aLJFCjtqmm4/0.jpg)](https://youtu.be/aLJFCjtqmm4?si=e9TVLuvanPN0wTPf)
+
+> 이 프로젝트는 오픈소스로 무료이며, 누구나 코드를 자유롭게 사용·수정·재배포할 수 있습니다.  
+> This project is open-source and free to use; you’re welcome to use, modify, and redistribute the code.
+
 ## Windows 설치 안내 (사용자용)
 
 릴리즈: https://github.com/JKH-ML/windows-calendar-widget/releases

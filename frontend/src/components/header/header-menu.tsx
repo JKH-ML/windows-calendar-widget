@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/components/language-provider'
 import { useWidgetVisibility } from '@/components/widget-visibility-context'
-import { Quit } from '../../../wailsjs/runtime/runtime'
+import { BrowserOpenURL, Quit } from '../../../wailsjs/runtime/runtime'
 import PositionSizeDialog from './position-size-dialog'
 import AccountDialog from './account-dialog'
 import CalendarSettingsDialog from './calendar-settings-dialog'
@@ -191,7 +191,10 @@ export default function HeaderMenu({
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground text-left"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              BrowserOpenURL('https://open.kakao.com/me/maplestudy')
+              setOpen(false)
+            }}
             type="button"
           >
             {t('menuContact')}
