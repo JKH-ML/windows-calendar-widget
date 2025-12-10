@@ -9,6 +9,7 @@ import { BrowserOpenURL, Quit } from '../../../wailsjs/runtime/runtime'
 import PositionSizeDialog from './position-size-dialog'
 import AccountDialog from './account-dialog'
 import CalendarSettingsDialog from './calendar-settings-dialog'
+import SearchDialog from './search-dialog'
 
 type Props = {
   countryCode: string
@@ -28,6 +29,7 @@ export default function HeaderMenu({
   const [positionDialogOpen, setPositionDialogOpen] = useState(false)
   const [accountDialogOpen, setAccountDialogOpen] = useState(false)
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false)
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const {
     language,
@@ -184,7 +186,10 @@ export default function HeaderMenu({
           </div>
           <button
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground text-left"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setSearchDialogOpen(true)
+              setOpen(false)
+            }}
             type="button"
           >
             {t('menuSearch')}
@@ -216,6 +221,10 @@ export default function HeaderMenu({
         onChange={setCountryCode}
         weekStartsOn={weekStartsOn}
         onChangeWeekStartsOn={(v) => setWeekStartsOn(v)}
+      />
+      <SearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
       />
     </div>
   )

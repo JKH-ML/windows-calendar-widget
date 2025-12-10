@@ -50,6 +50,10 @@ export function ListEvents() {
   return window['go']['main']['App']['ListEvents']();
 }
 
+export function SearchEvents(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SearchEvents'](arg1, arg2, arg3, arg4);
+}
+
 export function UpdateEvent(arg1) {
   return window['go']['main']['App']['UpdateEvent'](arg1);
 }

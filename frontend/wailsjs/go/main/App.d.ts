@@ -26,6 +26,8 @@ export function GoogleTokenInfo():Promise<main.GoogleTokenInfo>;
 
 export function ListEvents():Promise<Array<main.CalendarEvent>>;
 
+export function SearchEvents(arg1:string,arg2:string,arg3:string,arg4:number):Promise<Array<main.CalendarEvent>>;
+
 export function UpdateEvent(arg1:main.CalendarEvent):Promise<main.CalendarEvent>;
 
 export function UpdateSettings(arg1:main.AppSettings):Promise<main.AppSettings>;

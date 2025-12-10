@@ -1,9 +1,21 @@
 # Calendar Widget
 
 [![Demo video](https://img.youtube.com/vi/aLJFCjtqmm4/0.jpg)](https://youtu.be/aLJFCjtqmm4?si=e9TVLuvanPN0wTPf)
+> 유튜브 데모 영상을 보려면 위 썸네일을 클릭하세요.  
+> Click the thumbnail above to watch the YouTube demo.
 
 > 이 프로젝트는 오픈소스로 무료이며, 누구나 코드를 자유롭게 사용·수정·재배포할 수 있습니다.  
 > This project is open-source and free to use; you’re welcome to use, modify, and redistribute the code.
+
+![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
+![Wails](https://img.shields.io/badge/Wails-CC0000?style=flat&logo=go&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat&logo=sqlite&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
+![Tailwind_CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
+![Radix_UI](https://img.shields.io/badge/Radix_UI-111827?style=flat&logo=radix-ui&logoColor=white)
+![Framer_Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=flat&logo=framer&logoColor=white)
 
 ## Windows 설치 안내 (사용자용)
 

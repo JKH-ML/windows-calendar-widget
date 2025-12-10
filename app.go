@@ -740,6 +740,94 @@ func (a *App) ListEvents() ([]CalendarEvent, error) {
 	return events, nil
 }
 
+// SearchEvents returns events that match the query within the given time window.
+// start/end are RFC3339 strings; if empty, defaults to a broad window around "now".
+func (a *App) SearchEvents(query, start, end string, limit int) ([]CalendarEvent, error) {
+	if a.db == nil {
+		return nil, errors.New("db not initialised")
+	}
+
+	// Very wide defaults so search is not artificially limited.
+	startTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	endTime := time.Date(2100, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	if strings.TrimSpace(start) != "" {
+		parsed, err := time.Parse(time.RFC3339, start)
+		if err != nil {
+			return nil, fmt.Errorf("invalid start: %w", err)
+		}
+		startTime = parsed
+	}
+	if strings.TrimSpace(end) != "" {
+		parsed, err := time.Parse(time.RFC3339, end)
+		if err != nil {
+			return nil, fmt.Errorf("invalid end: %w", err)
+		}
+		endTime = parsed
+	}
+	// ensure end is after start
+	if !endTime.After(startTime) {
+		endTime = startTime.Add(24 * time.Hour)
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+
+	terms := []string{}
+	for _, part := range strings.Fields(strings.ToLower(query)) {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		terms = append(terms, part)
+	}
+
+	sqlStr := `
+		SELECT id, title, all_day, start, end, COALESCE(recurrence,'none'), COALESCE(recurrence_custom,''), COALESCE(location,''), alert, alert_offset, COALESCE(color,''), COALESCE(description,''), sync_status, COALESCE(google_event_id,''), COALESCE(google_calendar_id,''), COALESCE(time_zone,''), COALESCE(google_etag,''), google_updated_at, updated_at, created_at
+		FROM events
+		WHERE sync_status != 'deleted' AND start BETWEEN ? AND ?
+	`
+	args := []interface{}{startTime, endTime}
+
+	for range terms {
+		sqlStr += " AND (LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(location) LIKE ?)"
+	}
+
+	sqlStr += " ORDER BY start ASC LIMIT ?"
+	for _, term := range terms {
+		pattern := "%" + term + "%"
+		args = append(args, pattern, pattern, pattern)
+	}
+	args = append(args, limit)
+
+	rows, err := a.db.Query(sqlStr, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []CalendarEvent
+	for rows.Next() {
+		var e CalendarEvent
+		var allDay int
+		var startVal, endVal, updatedAt, createdAt time.Time
+		var googleUpdatedAt sql.NullTime
+		if err := rows.Scan(&e.ID, &e.Title, &allDay, &startVal, &endVal, &e.Recurrence, &e.RecurrenceEx, &e.Location, &e.Alert, &e.AlertOffset, &e.Color, &e.Description, &e.SyncStatus, &e.GoogleEventID, &e.GoogleCalendarID, &e.TimeZone, &e.GoogleETag, &googleUpdatedAt, &updatedAt, &createdAt); err != nil {
+			return nil, err
+		}
+		e.AllDay = allDay == 1
+		e.Start = startVal.Format(time.RFC3339)
+		e.End = endVal.Format(time.RFC3339)
+		if googleUpdatedAt.Valid {
+			e.GoogleUpdatedAt = googleUpdatedAt.Time.Format(time.RFC3339)
+		}
+		e.UpdatedAt = updatedAt.Format(time.RFC3339)
+		e.CreatedAt = createdAt.Format(time.RFC3339)
+		events = append(events, e)
+	}
+	return events, nil
+}
+
 func (a *App) CreateEvent(e CalendarEvent) (CalendarEvent, error) {
 	if a.db == nil {
 		return CalendarEvent{}, errors.New("db not initialised")
