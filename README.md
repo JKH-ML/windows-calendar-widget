@@ -1,11 +1,14 @@
 # Calendar Widget
 
-[![Demo video](https://img.youtube.com/vi/aLJFCjtqmm4/0.jpg)](https://youtu.be/aLJFCjtqmm4?si=e9TVLuvanPN0wTPf)
-> 유튜브 데모 영상을 보려면 위 썸네일을 클릭하세요.  
-> Click the thumbnail above to watch the YouTube demo.
+<p align="center">
+  <img src="frontend/src/assets/images/logo_1024.png" alt="Calendar Widget logo" width="220" />
+</p>
 
 > 이 프로젝트는 오픈소스로 무료이며, 누구나 코드를 자유롭게 사용·수정·재배포할 수 있습니다.  
 > This project is open-source and free to use; you’re welcome to use, modify, and redistribute the code.
+
+> 데모 영상은 준비 중입니다. 곧 업데이트될 예정입니다.  
+> A new demo video is in preparation and will be shared soon.
 
 ![Go](https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white)
 ![Wails](https://img.shields.io/badge/Wails-CC0000?style=flat&logo=go&logoColor=white)
