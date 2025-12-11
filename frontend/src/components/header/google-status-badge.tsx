@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, AlertCircle, PlugZap, Loader2 } from 'lucide-react'
 import { GoogleTokenInfo } from '../../../wailsjs/go/main/App'
 import type { main } from '../../../wailsjs/go/models'
@@ -12,12 +12,15 @@ export default function GoogleStatusBadge() {
   const [status, setStatus] = useState<Status>('loading')
   const [info, setInfo] = useState<main.GoogleTokenInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       setError(null)
-      setStatus('loading')
+      if (!hasLoadedRef.current) {
+        setStatus('loading')
+      }
       try {
         const data = await GoogleTokenInfo()
         if (cancelled) return
@@ -29,6 +32,7 @@ export default function GoogleStatusBadge() {
         } else {
           setStatus('disconnected')
         }
+        hasLoadedRef.current = true
       } catch (err: any) {
         if (cancelled) return
         setError(err?.message ?? String(err))

@@ -16,36 +16,49 @@ import {
 import { pushLocalChanges } from '@/lib/sync-client'
 import { useLanguage } from './language-provider'
 import { useHolidaySettings } from './hooks/use-holiday-settings'
-import StatusBanner from './status-banner'
 
 export default function CalendarDemo() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [mode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())
   const isFocusSyncing = useRef(false)
-  const { resolvedLanguage, t } = useLanguage()
+  const { resolvedLanguage } = useLanguage()
   const {
     countryCode,
     setCountryCode,
     weekStartsOn,
     setWeekStartsOn,
   } = useHolidaySettings()
-  const [syncError, setSyncError] = useState<string | null>(null)
-  const [holidayWarning, setHolidayWarning] = useState<string | null>(null)
+  const syncingRef = useRef(false)
+
+  async function syncAndLoad() {
+    if (syncingRef.current) return
+    syncingRef.current = true
+    try {
+      await GoogleSync()
+      const data = await ListEvents()
+      const holidays = await GoogleListHolidays(countryCode || resolvedLanguage)
+      setEvents(
+        [...data, ...holidays].map((e: any) => ({
+          ...e,
+          start: new Date(e.start),
+          end: new Date(e.end),
+        }))
+      )
+    } catch (error) {
+      console.warn('Sync and load failed', error)
+    } finally {
+      syncingRef.current = false
+    }
+  }
 
   useEffect(() => {
-    const handleSyncError = (event: Event) => {
-      const detail = (event as CustomEvent).detail as string | undefined
-      setSyncError(detail || t('statusSyncFailed'))
+    function handleClear() {
+      setEvents([])
     }
-    const handleSyncOk = () => setSyncError(null)
-    window.addEventListener('sync-error', handleSyncError)
-    window.addEventListener('sync-ok', handleSyncOk)
-    return () => {
-      window.removeEventListener('sync-error', handleSyncError)
-      window.removeEventListener('sync-ok', handleSyncOk)
-    }
-  }, [t])
+    window.addEventListener('local-data-cleared', handleClear)
+    return () => window.removeEventListener('local-data-cleared', handleClear)
+  }, [])
 
   useEffect(() => {
     async function fetchEvents() {
@@ -54,9 +67,8 @@ export default function CalendarDemo() {
         let holidays: any[] = []
         try {
           holidays = await GoogleListHolidays(countryCode || resolvedLanguage)
-          setHolidayWarning(null)
         } catch (error) {
-          setHolidayWarning(t('statusHolidayAuthNeeded'))
+          // Ignore holiday sync failures silently; Google auth may be missing.
           holidays = []
         }
         setEvents(
@@ -69,34 +81,19 @@ export default function CalendarDemo() {
             end: new Date(e.end),
           }))
         )
-        setSyncError(null)
       } catch (error) {
         console.error('Failed to load events', error)
-        setSyncError(t('statusSyncFailed'))
       }
     }
     fetchEvents()
-  }, [resolvedLanguage, countryCode, t])
+  }, [resolvedLanguage, countryCode])
 
   useEffect(() => {
     async function syncOnFocus() {
       if (isFocusSyncing.current) return
       isFocusSyncing.current = true
       try {
-        await GoogleSync()
-        const data = await ListEvents()
-        const holidays = await GoogleListHolidays(countryCode || resolvedLanguage)
-        setEvents(
-          [...data, ...holidays].map((e: any) => ({
-            ...e,
-            start: new Date(e.start),
-            end: new Date(e.end),
-          }))
-        )
-        setSyncError(null)
-      } catch (error) {
-        console.warn('Focus sync failed', error)
-        setSyncError(t('statusSyncFailed'))
+        await syncAndLoad()
       } finally {
         isFocusSyncing.current = false
       }
@@ -105,6 +102,14 @@ export default function CalendarDemo() {
     return () => {
       window.removeEventListener('focus', syncOnFocus)
     }
+  }, [countryCode, resolvedLanguage])
+
+  useEffect(() => {
+    const onConnected = () => {
+      void syncAndLoad()
+    }
+    window.addEventListener('google-connected', onConnected)
+    return () => window.removeEventListener('google-connected', onConnected)
   }, [countryCode, resolvedLanguage])
 
   const api = {
@@ -162,10 +167,6 @@ export default function CalendarDemo() {
           weekStartsOn={weekStartsOn}
           setWeekStartsOn={(v) => setWeekStartsOn(v)}
         />
-        <div className="px-3 pt-1 flex flex-col gap-2">
-          {syncError && <StatusBanner tone="error" message={syncError} />}
-          {holidayWarning && <StatusBanner tone="warn" message={holidayWarning} />}
-        </div>
         <div className="rounded-2xl border bg-card shadow-2xl shadow-black/5">
           <div className="flex flex-col">
             <CalendarBody />

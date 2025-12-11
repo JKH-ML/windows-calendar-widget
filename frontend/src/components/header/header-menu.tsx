@@ -7,7 +7,6 @@ import { useLanguage } from '@/components/language-provider'
 import { useWidgetVisibility } from '@/components/widget-visibility-context'
 import { BrowserOpenURL, Quit } from '../../../wailsjs/runtime/runtime'
 import PositionSizeDialog from './position-size-dialog'
-import AccountDialog from './account-dialog'
 import CalendarSettingsDialog from './calendar-settings-dialog'
 import SearchDialog from './search-dialog'
 
@@ -16,6 +15,7 @@ type Props = {
   setCountryCode: (code: string) => void
   weekStartsOn: 0 | 1
   setWeekStartsOn: (value: 0 | 1) => void
+  onOpenAccountDialog: () => void
 }
 
 export default function HeaderMenu({
@@ -23,11 +23,11 @@ export default function HeaderMenu({
   setCountryCode,
   weekStartsOn,
   setWeekStartsOn,
+  onOpenAccountDialog,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
   const [positionDialogOpen, setPositionDialogOpen] = useState(false)
-  const [accountDialogOpen, setAccountDialogOpen] = useState(false)
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false)
   const [searchDialogOpen, setSearchDialogOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -110,7 +110,7 @@ export default function HeaderMenu({
           <button
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground text-left"
             onClick={() => {
-              setAccountDialogOpen(true)
+              onOpenAccountDialog()
               setOpen(false)
             }}
             type="button"
@@ -209,10 +209,6 @@ export default function HeaderMenu({
       <PositionSizeDialog
         open={positionDialogOpen}
         onOpenChange={setPositionDialogOpen}
-      />
-      <AccountDialog
-        open={accountDialogOpen}
-        onOpenChange={setAccountDialogOpen}
       />
       <CalendarSettingsDialog
         open={calendarDialogOpen}

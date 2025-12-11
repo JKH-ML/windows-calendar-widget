@@ -3,15 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <title>Windows Calendar Widget</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 16px; color: #0f172a; background: #f8fafc; }
+    h1 { margin-bottom: 8px; }
+    h2 { margin-top: 24px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin: 14px 0; box-shadow: 0 10px 30px -18px rgba(15,23,42,0.35); }
+    ul { padding-left: 20px; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
+    a { color: #0f62fe; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
   <h1>Windows Calendar Widget</h1>
-  <p>
-    A lightweight Windows desktop calendar widget using Google Calendar API.
-  </p>
+  <p>A lightweight desktop widget for Windows that shows your Google Calendar on top of the desktop, with quick add/edit, theme toggle, and holiday display.</p>
 
-  <p>
-    <a href="privacy.html">Privacy Policy</a>
-  </p>
+  <div class="card">
+    <h2>What the app does</h2>
+    <ul>
+      <li>Displays your Google Calendar events (read) and lets you create/update/delete events (write) from the widget.</li>
+      <li>Shows public holidays by country/locale.</li>
+      <li>Runs locally on Windows (built with Go + Wails + React); no backend server.</li>
+      <li>Optional auto-start; frameless always-on-desktop UI you can resize and move.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Google permissions (scopes)</h2>
+    <ul>
+      <li><code>https://www.googleapis.com/auth/calendar.events</code> – read and manage your calendar events to sync.</li>
+      <li><code>openid</code>, <code>https://www.googleapis.com/auth/userinfo.email</code>, <code>https://www.googleapis.com/auth/userinfo.profile</code> – show the signed-in account name/email/avatar and keep you signed in.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>How data is handled</h2>
+    <ul>
+      <li>Event data and Google tokens are stored only on your device in <code>%AppData%/calendar-widget</code> (SQLite DB + token JSON).</li>
+      <li>No data is sent to our own servers or shared with third parties.</li>
+      <li>Logout removes local tokens and clears locally cached events; you can also revoke access anytime in your Google Account.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Download &amp; Source</h2>
+    <ul>
+      <li>Releases: <a href="https://github.com/JKH-ML/windows-calendar-widget/releases">GitHub Releases</a></li>
+      <li>Source code: <a href="https://github.com/JKH-ML/windows-calendar-widget">github.com/JKH-ML/windows-calendar-widget</a></li>
+    </ul>
+  </div>
+
+  <p><a href="privacy.html">Privacy Policy</a></p>
 </body>
 </html>

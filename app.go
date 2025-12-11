@@ -143,7 +143,11 @@ func (a *App) GoogleLogout() error {
 	if a.google == nil {
 		return errors.New("google sync not initialised")
 	}
-	return a.google.ClearTokens()
+	if err := a.google.ClearTokens(); err != nil {
+		return err
+	}
+	// Remove locally cached calendar data so logout leaves no stale entries.
+	return a.clearLocalData()
 }
 
 // startAuthCallbackServer listens on the redirect URI for OAuth codes and exchanges them automatically.
@@ -1009,6 +1013,20 @@ func parseEventTimes(e CalendarEvent) (time.Time, time.Time, error) {
 		return time.Time{}, time.Time{}, fmt.Errorf("invalid end: %w", err)
 	}
 	return startTime, endTime, nil
+}
+
+// clearLocalData removes locally stored calendar data without touching remote calendars.
+func (a *App) clearLocalData() error {
+	if a.db == nil {
+		return errors.New("db not initialised")
+	}
+	if _, err := a.db.Exec(`DELETE FROM events`); err != nil {
+		return fmt.Errorf("clear events: %w", err)
+	}
+	if _, err := a.db.Exec(`DELETE FROM sync_state`); err != nil {
+		return fmt.Errorf("clear sync state: %w", err)
+	}
+	return nil
 }
 
 func appConfigDir() (string, error) {

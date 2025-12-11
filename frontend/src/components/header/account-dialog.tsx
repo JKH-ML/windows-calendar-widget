@@ -1,14 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useLanguage } from '@/components/language-provider'
 import {
   GoogleAuthURL,
@@ -26,21 +18,12 @@ type Props = {
 }
 
 export default function AccountDialog({ open, onOpenChange }: Props) {
-  const { locale, t } = useLanguage()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<main.GoogleTokenInfo | null>(null)
   const [code, setCode] = useState('')
   const [authRequested, setAuthRequested] = useState(false)
-
-  const formattedExpiry = useMemo(() => {
-    if (!info?.expiresAt) return ''
-    try {
-      return format(new Date(info.expiresAt), 'yyyy-MM-dd HH:mm', { locale })
-    } catch {
-      return info.expiresAt
-    }
-  }, [info?.expiresAt, locale])
 
   useEffect(() => {
     if (!open) return
@@ -53,6 +36,9 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
     try {
       const data = await GoogleTokenInfo()
       setInfo(data)
+      if (data.connected) {
+        window.dispatchEvent(new Event('google-connected'))
+      }
     } catch (err: any) {
       setError(err?.message ?? String(err))
     } finally {
@@ -97,6 +83,8 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
     try {
       await GoogleLogout()
       await refreshInfo()
+      // Notify UI to drop locally cached events immediately after logout.
+      window.dispatchEvent(new Event('local-data-cleared'))
     } catch (err: any) {
       setError(err?.message ?? String(err))
     } finally {
@@ -115,6 +103,7 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
         setInfo(data)
         if (data.connected) {
           setAuthRequested(false)
+          window.dispatchEvent(new Event('google-connected'))
         }
       } catch (err: any) {
         setError(err?.message ?? String(err))
@@ -127,14 +116,9 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <div>
               <DialogTitle>{t('menuAccount')}</DialogTitle>
-              <DialogDescription>
-                {connected
-                  ? t('accountConnectedStatus')
-                  : t('accountDisconnectedStatus')}
-              </DialogDescription>
             </div>
             <GoogleStatusBadge />
           </div>
@@ -157,7 +141,8 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
 
         {connected && info && (
           <div className="flex flex-col gap-2 rounded-md border bg-muted/40 px-3 py-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
               {info.picture ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -178,20 +163,7 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
                   {info.userEmail || t('accountUnknownEmail')}
                 </span>
               </div>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {t('accountExpiresAt')}: {formattedExpiry || '—'}
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-muted-foreground">
-                {t('accountScope')}: {info.scope || '—'}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {t('accountRefreshToken')}:{' '}
-                {info.hasRefreshToken ? t('accountYes') : t('accountNo')}
-              </div>
-            </div>
-            <div className="flex justify-end">
               <Button
                 variant="outline"
                 size="sm"
@@ -206,32 +178,9 @@ export default function AccountDialog({ open, onOpenChange }: Props) {
 
         {!connected && (
           <div className="flex flex-col gap-3">
-            <div className="text-sm text-muted-foreground">
-              {t('accountConnectHelp')}
-            </div>
             <Button onClick={startAuth} disabled={loading || notConfigured}>
               {t('accountStartSync')}
             </Button>
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder={t('accountEnterCodePlaceholder')}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                disabled={loading}
-              />
-              <Button
-                variant="outline"
-                onClick={submitCode}
-                disabled={loading || !authRequested}
-              >
-                {t('accountSubmitCode')}
-              </Button>
-            </div>
-            {!authRequested && (
-              <div className="text-xs text-muted-foreground">
-                {t('accountCodeHint')}
-              </div>
-            )}
           </div>
         )}
       </DialogContent>

@@ -7,6 +7,7 @@ import CalendarHeaderActionsSync from '@/components/calendar/header/actions/cale
 import { useCalendarContext } from '@/components/calendar/calendar-context'
 import HeaderMenu from './header-menu'
 import { useLanguage } from '../language-provider'
+import AccountDialog from './account-dialog'
 
 type Props = {
   countryCode: string
@@ -24,6 +25,7 @@ export default function Header({
   const { setDate } = useCalendarContext()
   const [now, setNow] = useState(new Date())
   const { locale } = useLanguage()
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -43,7 +45,9 @@ export default function Header({
         <CalendarHeaderDateChevrons />
       </div>
       <div className="flex items-center justify-end gap-2">
-        <CalendarHeaderActionsSync />
+        <CalendarHeaderActionsSync
+          onOpenAccountDialog={() => setAccountDialogOpen(true)}
+        />
         <CalendarHeaderActionsAdd />
         <HeaderThemeToggle />
         <HeaderMenu
@@ -51,8 +55,13 @@ export default function Header({
           setCountryCode={setCountryCode}
           weekStartsOn={weekStartsOn}
           setWeekStartsOn={setWeekStartsOn}
+          onOpenAccountDialog={() => setAccountDialogOpen(true)}
         />
       </div>
+      <AccountDialog
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+      />
     </div>
   )
 }

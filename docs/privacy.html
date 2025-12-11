@@ -3,54 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <title>Privacy Policy</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 16px; color: #0f172a; background: #f8fafc; }
+    h1 { margin-bottom: 10px; }
+    h2 { margin-top: 22px; }
+    ul { padding-left: 20px; }
+  </style>
 </head>
 <body>
   <h1>Privacy Policy</h1>
+  <p>This policy applies to the Windows Calendar Widget (“the app”) maintained by JKH-ML.</p>
 
-  <p>
-    This privacy policy applies to the Windows Calendar Widget application
-    developed and operated by JKH-ML.
-  </p>
+  <h2>Information We Access</h2>
+  <ul>
+    <li>Google Calendar events: titles, start/end times, all-day status, recurrence info, locations, descriptions, colors.</li>
+    <li>Google account basics for sign-in: name, email, profile picture.</li>
+    <li>Authentication tokens from Google (access/refresh tokens) to keep you signed in.</li>
+  </ul>
 
-  <h2>Data Collection</h2>
-  <p>
-    The application accesses Google Calendar data such as event titles, start and end times,
-    and event descriptions, only with the user's explicit consent.
-  </p>
+  <h2>How We Use Information</h2>
+  <ul>
+    <li>To display your calendar events and holidays in the desktop widget.</li>
+    <li>To let you create, update, and delete calendar events you choose to manage via the app.</li>
+    <li>Account name/email/avatar are shown only to indicate which account is signed in.</li>
+  </ul>
 
-  <h2>Use of Data</h2>
-  <p>
-    The accessed data is used solely to display calendar events within the Windows Calendar Widget.
-    The application does not use this data for advertising, analytics, or any other purpose.
-  </p>
-
-  <h2>Data Storage</h2>
-  <p>
-    The application does not store Google user data on any external servers.
-    All data is processed locally on the user's device.
-  </p>
+  <h2>Data Storage & Retention</h2>
+  <ul>
+    <li>No data is sent to or stored on our servers; the app has no backend.</li>
+    <li>Event data and tokens are stored locally on your device in <code>%AppData%/calendar-widget</code> (SQLite database and token JSON).</li>
+    <li>When you log out inside the app, local tokens and cached events are cleared.</li>
+  </ul>
 
   <h2>Data Sharing</h2>
-  <p>
-    The application does not share Google user data with any third parties.
-  </p>
+  <p>We do not sell, rent, or share your Google data with third parties.</p>
 
-  <h2>User Control and Data Deletion</h2>
-  <p>
-    Users can revoke the application's access to their Google account at any time
-    via the Google Account permissions page, which will immediately stop data access.
-  </p>
+  <h2>User Control & Revocation</h2>
+  <ul>
+    <li>You can log out in the app to clear local data and stop further access.</li>
+    <li>You can revoke the app’s Google access anytime at <a href="https://myaccount.google.com/permissions">Google Account permissions</a>.</li>
+    <li>If you revoke access, the app immediately loses permission to read or write your calendar.</li>
+  </ul>
 
   <h2>Google API Services</h2>
-  <p>
-    This app’s use and transfer of information received from Google APIs adheres to
-    the Google API Services User Data Policy, including the Limited Use requirements.
-  </p>
+  <p>This app’s use and transfer of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements.</p>
+
+  <h2>Security</h2>
+  <p>All communication with Google APIs uses HTTPS. Data is stored only on your device; please keep your device and operating system secure.</p>
+
+  <h2>Changes</h2>
+  <p>We may update this policy for clarity or compliance. Material changes will be reflected on this page with a revised date.</p>
 
   <h2>Contact</h2>
-  <p>
-    If you have any questions about this Privacy Policy, please contact:
-    banghak2da@gmail.com
-  </p>
+  <p>If you have questions about this policy, contact: banghak2da@gmail.com</p>
 </body>
 </html>
