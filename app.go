@@ -1381,7 +1381,7 @@ func (a *App) DownloadAndInstall(downloadURL string) error {
 	batPath := exePath + ".update.bat"
 	bat := fmt.Sprintf(`@echo off
 :wait
-powershell -NoProfile -Command "if (Get-Process -Id %d -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+powershell -NoProfile -WindowStyle Hidden -Command "if (Get-Process -Id %d -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
 if not errorlevel 1 (
     timeout /t 1 /nobreak >NUL
     goto wait
