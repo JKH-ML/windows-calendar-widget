@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CalendarEvent, Mode } from './calendar/calendar-types'
+import { CalendarEvent } from './calendar/calendar-types'
 import CalendarProvider from './calendar/calendar-provider'
 import CalendarBody from './calendar/body/calendar-body'
 import Header from './header/header'
@@ -24,7 +24,6 @@ const HOMEPAGE_URL = 'https://jkh-ml.github.io/windows-calendar-widget/'
 
 export default function CalendarDemo() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [mode, setMode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())
   const [syncError, setSyncError] = useState<string | null>(null)
   const [googleConnected, setGoogleConnected] = useState<boolean | null>(null)
@@ -179,8 +178,8 @@ export default function CalendarDemo() {
     <CalendarProvider
       events={events}
       setEvents={setEvents}
-      mode={mode}
-      setMode={setMode}
+      mode="month"
+      setMode={() => {}}
       date={date}
       setDate={setDate}
       weekStartsOn={weekStartsOn}
