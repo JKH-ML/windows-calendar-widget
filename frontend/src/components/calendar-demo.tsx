@@ -16,13 +16,15 @@ import {
 import { pushLocalChanges } from '@/lib/sync-client'
 import { useLanguage } from './language-provider'
 import { useHolidaySettings } from './hooks/use-holiday-settings'
+import StatusBanner from './status-banner'
 
 export default function CalendarDemo() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [mode] = useState<Mode>('month')
+  const [mode, setMode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())
+  const [syncError, setSyncError] = useState<string | null>(null)
   const isFocusSyncing = useRef(false)
-  const { resolvedLanguage } = useLanguage()
+  const { resolvedLanguage, t } = useLanguage()
   const {
     countryCode,
     setCountryCode,
@@ -45,8 +47,10 @@ export default function CalendarDemo() {
           end: new Date(e.end),
         }))
       )
-    } catch (error) {
+      setSyncError(null)
+    } catch (error: any) {
       console.warn('Sync and load failed', error)
+      setSyncError(t('statusSyncFailed'))
     } finally {
       syncingRef.current = false
     }
@@ -152,7 +156,7 @@ export default function CalendarDemo() {
       events={events}
       setEvents={setEvents}
       mode={mode}
-      setMode={() => {}}
+      setMode={setMode}
       date={date}
       setDate={setDate}
       weekStartsOn={weekStartsOn}
@@ -167,6 +171,11 @@ export default function CalendarDemo() {
           weekStartsOn={weekStartsOn}
           setWeekStartsOn={(v) => setWeekStartsOn(v)}
         />
+        {syncError && (
+          <div className="px-3 pt-2">
+            <StatusBanner tone="error" message={syncError} />
+          </div>
+        )}
         <div className="rounded-2xl border bg-card shadow-2xl shadow-black/5">
           <div className="flex flex-col">
             <CalendarBody />

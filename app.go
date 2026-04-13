@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -20,12 +21,16 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// AppVersion is set at build time via -ldflags "-X main.AppVersion=x.y.z".
+// Falls back to "dev" when running outside a release build.
+var AppVersion = "dev"
+
 // App struct
 type App struct {
-	ctx    context.Context
-	db     *sql.DB
-	google *GoogleSyncService
-	cbOnce sync.Once
+	ctx      context.Context
+	db       *sql.DB
+	google   *GoogleSyncService
+	cbOnce   sync.Once
 	settings AppSettings
 }
 
@@ -316,26 +321,26 @@ func holidayCalendarID(locale string) string {
 
 // Observances/non-public days we don't want to surface as "red day" holidays.
 var skipHolidayTitles = map[string]bool{
-	"식목일":       true,
-	"노동절":       true,
-	"어버이날":      true,
-	"스승의날":      true,
-	"제헌절":       true,
-	"국군의 날":     true,
-	"국군의날":      true,
+	"식목일":      true,
+	"노동절":      true,
+	"어버이날":     true,
+	"스승의날":     true,
+	"제헌절":      true,
+	"국군의 날":    true,
+	"국군의날":     true,
 	"크리스마스 이브": true,
-	"섣달 그믐날":    true,
+	"섣달 그믐날":   true,
 	// English fallbacks in case Google serves en titles.
-	"arbor day":      true,
-	"labor day":      true,
-	"parents' day":   true,
-	"parents day":    true,
-	"teachers' day":  true,
-	"teachers day":   true,
+	"arbor day":        true,
+	"labor day":        true,
+	"parents' day":     true,
+	"parents day":      true,
+	"teachers' day":    true,
+	"teachers day":     true,
 	"constitution day": true,
 	"armed forces day": true,
-	"christmas eve":  true,
-	"new year's eve": true,
+	"christmas eve":    true,
+	"new year's eve":   true,
 }
 
 // GoogleListHolidays fetches public holiday events for the current year from Google's holiday calendar.
@@ -371,20 +376,20 @@ func (a *App) GoogleListHolidays(locale string) ([]CalendarEvent, error) {
 			continue
 		}
 		out = append(out, CalendarEvent{
-			ID:          fmt.Sprintf("holiday-%s", ge.ID),
-			Title:       ge.Summary,
-			AllDay:      true,
-			Start:       startTime.Format(time.RFC3339),
-			End:         startTime.Format(time.RFC3339),
-			Recurrence:  "none",
-			Location:    ge.Location,
+			ID:         fmt.Sprintf("holiday-%s", ge.ID),
+			Title:      ge.Summary,
+			AllDay:     true,
+			Start:      startTime.Format(time.RFC3339),
+			End:        startTime.Format(time.RFC3339),
+			Recurrence: "none",
+			Location:   ge.Location,
 			// Force a red hue for holidays regardless of Google colorId.
-			Color:       "11",
-			Description: ge.Description,
-			SyncStatus:  "holiday",
-			TimeZone:    firstNonEmpty(ge.Start.TimeZone, "UTC"),
-			GoogleETag:  ge.Etag,
-			GoogleEventID: ge.ID,
+			Color:            "11",
+			Description:      ge.Description,
+			SyncStatus:       "holiday",
+			TimeZone:         firstNonEmpty(ge.Start.TimeZone, "UTC"),
+			GoogleETag:       ge.Etag,
+			GoogleEventID:    ge.ID,
 			GoogleCalendarID: calID,
 		})
 	}
@@ -461,7 +466,7 @@ func (a *App) pushLocalChanges(ctx context.Context, calendarID string) (int, err
 	if a.db == nil {
 		return 0, errors.New("db not initialised")
 	}
-		rows, err := a.db.Query(`SELECT id, title, all_day, start, end, COALESCE(recurrence,''), COALESCE(recurrence_custom,''), COALESCE(location,''), alert, alert_offset, COALESCE(color,''), COALESCE(description,''), sync_status, COALESCE(google_event_id,''), COALESCE(google_calendar_id,''), COALESCE(time_zone,''), COALESCE(google_etag,'') FROM events WHERE sync_status IN ('new','dirty','deleted','local')`)
+	rows, err := a.db.Query(`SELECT id, title, all_day, start, end, COALESCE(recurrence,''), COALESCE(recurrence_custom,''), COALESCE(location,''), alert, alert_offset, COALESCE(color,''), COALESCE(description,''), sync_status, COALESCE(google_event_id,''), COALESCE(google_calendar_id,''), COALESCE(time_zone,''), COALESCE(google_etag,'') FROM events WHERE sync_status IN ('new','dirty','deleted','local')`)
 	if err != nil {
 		return 0, err
 	}
@@ -472,57 +477,57 @@ func (a *App) pushLocalChanges(ctx context.Context, calendarID string) (int, err
 		var e CalendarEvent
 		var allDay int
 		var start, end time.Time
-			if err := rows.Scan(&e.ID, &e.Title, &allDay, &start, &end, &e.Recurrence, &e.RecurrenceEx, &e.Location, &e.Alert, &e.AlertOffset, &e.Color, &e.Description, &e.SyncStatus, &e.GoogleEventID, &e.GoogleCalendarID, &e.TimeZone, &e.GoogleETag); err != nil {
+		if err := rows.Scan(&e.ID, &e.Title, &allDay, &start, &end, &e.Recurrence, &e.RecurrenceEx, &e.Location, &e.Alert, &e.AlertOffset, &e.Color, &e.Description, &e.SyncStatus, &e.GoogleEventID, &e.GoogleCalendarID, &e.TimeZone, &e.GoogleETag); err != nil {
+			return pushed, err
+		}
+		e.AllDay = allDay == 1
+		if e.SyncStatus == "deleted" {
+			if e.GoogleEventID != "" {
+				if err := a.google.DeleteEvent(ctx, calendarID, e.GoogleEventID); err != nil {
+					return pushed, err
+				}
+			}
+			if _, err := a.db.Exec(`DELETE FROM events WHERE id = ?`, e.ID); err != nil {
 				return pushed, err
 			}
-		e.AllDay = allDay == 1
-			if e.SyncStatus == "deleted" {
-				if e.GoogleEventID != "" {
-					if err := a.google.DeleteEvent(ctx, calendarID, e.GoogleEventID); err != nil {
-						return pushed, err
-					}
-				}
-				if _, err := a.db.Exec(`DELETE FROM events WHERE id = ?`, e.ID); err != nil {
-					return pushed, err
-				}
-				pushed++
-				continue
-			}
+			pushed++
+			continue
+		}
 
-			gEvent := calendarToGoogle(e, start, end)
-			var remote GoogleEvent
-				if e.GoogleEventID == "" {
-					r, err := a.google.CreateEvent(ctx, calendarID, gEvent)
+		gEvent := calendarToGoogle(e, start, end)
+		var remote GoogleEvent
+		if e.GoogleEventID == "" {
+			r, err := a.google.CreateEvent(ctx, calendarID, gEvent)
+			if err != nil {
+				return pushed, err
+			}
+			remote = r
+			pushed++
+			_, _ = a.db.Exec(`UPDATE events SET google_event_id=?, google_calendar_id=?, google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.ID, calendarID, r.Etag, r.Updated, e.ID)
+		} else {
+			r, err := a.google.UpdateEvent(ctx, calendarID, e.GoogleEventID, e.GoogleETag, gEvent)
+			if err != nil {
+				if errors.Is(err, errGoogleConflict) {
+					// Remote has changed; flag conflict and continue without overwriting.
+					_, _ = a.db.Exec(`UPDATE events SET sync_status='conflict' WHERE id=?`, e.ID)
+					continue
+				}
+				if errors.Is(err, errGoogleNotFound) {
+					// Remote was deleted; recreate as new.
+					r, err = a.google.CreateEvent(ctx, calendarID, gEvent)
 					if err != nil {
 						return pushed, err
 					}
-				remote = r
-				pushed++
-				_, _ = a.db.Exec(`UPDATE events SET google_event_id=?, google_calendar_id=?, google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.ID, calendarID, r.Etag, r.Updated, e.ID)
-				} else {
-					r, err := a.google.UpdateEvent(ctx, calendarID, e.GoogleEventID, e.GoogleETag, gEvent)
-					if err != nil {
-						if errors.Is(err, errGoogleConflict) {
-							// Remote has changed; flag conflict and continue without overwriting.
-							_, _ = a.db.Exec(`UPDATE events SET sync_status='conflict' WHERE id=?`, e.ID)
-							continue
-						}
-						if errors.Is(err, errGoogleNotFound) {
-							// Remote was deleted; recreate as new.
-							r, err = a.google.CreateEvent(ctx, calendarID, gEvent)
-							if err != nil {
-								return pushed, err
-							}
-							remote = r
-							pushed++
-							_, _ = a.db.Exec(`UPDATE events SET google_event_id=?, google_calendar_id=?, google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.ID, calendarID, r.Etag, r.Updated, e.ID)
-							continue
-					}
-					return pushed, err
+					remote = r
+					pushed++
+					_, _ = a.db.Exec(`UPDATE events SET google_event_id=?, google_calendar_id=?, google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.ID, calendarID, r.Etag, r.Updated, e.ID)
+					continue
 				}
-				remote = r
-				pushed++
-				_, _ = a.db.Exec(`UPDATE events SET google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.Etag, r.Updated, e.ID)
+				return pushed, err
+			}
+			remote = r
+			pushed++
+			_, _ = a.db.Exec(`UPDATE events SET google_etag=?, google_updated_at=?, sync_status='synced' WHERE id=?`, r.Etag, r.Updated, e.ID)
 		}
 		_ = remote // reserved for future use
 	}
@@ -592,8 +597,15 @@ func (a *App) initGoogleSync() error {
 		return err
 	}
 
-	clientID := os.Getenv("GOOGLE_CLIENT_ID")
-	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	// Prefer settings file values, fall back to environment variables.
+	clientID := a.settings.GoogleClientID
+	clientSecret := a.settings.GoogleClientSecret
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	if clientSecret == "" {
+		clientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	}
 	redirectURI := os.Getenv("GOOGLE_REDIRECT_URI")
 	if redirectURI == "" {
 		redirectURI = "http://localhost:34115/oauth2/callback"
@@ -625,6 +637,26 @@ func (a *App) initGoogleSync() error {
 		}()
 	})
 	return nil
+}
+
+// SaveGoogleClientConfig persists the OAuth client credentials and re-initialises the sync service.
+func (a *App) SaveGoogleClientConfig(clientID, clientSecret string) error {
+	a.settings.GoogleClientID = strings.TrimSpace(clientID)
+	a.settings.GoogleClientSecret = strings.TrimSpace(clientSecret)
+	if err := a.saveSettings(a.settings); err != nil {
+		return err
+	}
+	// Re-initialise so the new credentials take effect immediately.
+	return a.initGoogleSync()
+}
+
+// GetGoogleClientConfig returns the stored OAuth client ID (secret is not returned for security).
+func (a *App) GetGoogleClientConfig() (string, error) {
+	clientID := a.settings.GoogleClientID
+	if clientID == "" {
+		clientID = os.Getenv("GOOGLE_CLIENT_ID")
+	}
+	return clientID, nil
 }
 
 // CalendarEvent represents a stored event
@@ -716,7 +748,7 @@ func (a *App) ListEvents() ([]CalendarEvent, error) {
 	if a.db == nil {
 		return nil, errors.New("db not initialised")
 	}
-	rows, err := a.db.Query(`SELECT id, title, all_day, start, end, COALESCE(recurrence,'none'), COALESCE(recurrence_custom,''), COALESCE(location,''), alert, alert_offset, COALESCE(color,''), COALESCE(description,''), sync_status, COALESCE(google_event_id,''), COALESCE(google_calendar_id,''), COALESCE(time_zone,''), COALESCE(google_etag,''), google_updated_at, updated_at, created_at FROM events ORDER BY start ASC`)
+	rows, err := a.db.Query(`SELECT id, title, all_day, start, end, COALESCE(recurrence,'none'), COALESCE(recurrence_custom,''), COALESCE(location,''), alert, alert_offset, COALESCE(color,''), COALESCE(description,''), sync_status, COALESCE(google_event_id,''), COALESCE(google_calendar_id,''), COALESCE(time_zone,''), COALESCE(google_etag,''), google_updated_at, updated_at, created_at FROM events WHERE sync_status != 'deleted' ORDER BY start ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -919,13 +951,13 @@ func (a *App) UpdateEvent(e CalendarEvent) (CalendarEvent, error) {
 		e.GoogleUpdatedAt = val.Format(time.RFC3339)
 		googleUpdatedAt = &val
 	}
-		if e.TimeZone == "" {
-			if dbTimeZone.Valid && dbTimeZone.String != "" {
-				e.TimeZone = dbTimeZone.String
-			} else {
-				e.TimeZone = "UTC"
-			}
+	if e.TimeZone == "" {
+		if dbTimeZone.Valid && dbTimeZone.String != "" {
+			e.TimeZone = dbTimeZone.String
+		} else {
+			e.TimeZone = "UTC"
 		}
+	}
 	now := time.Now()
 	e.UpdatedAt = now.Format(time.RFC3339)
 	if e.SyncStatus == "" || e.SyncStatus == "synced" {
@@ -971,7 +1003,18 @@ func (a *App) DeleteEvent(id string) error {
 	if id == "" {
 		return errors.New("id required")
 	}
-	_, err := a.db.Exec(`UPDATE events SET sync_status='deleted' WHERE id = ?`, id)
+	// Check if this event has a Google counterpart that needs remote deletion.
+	var googleEventID sql.NullString
+	if err := a.db.QueryRow(`SELECT google_event_id FROM events WHERE id = ?`, id).Scan(&googleEventID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("lookup event: %w", err)
+	}
+	if googleEventID.Valid && googleEventID.String != "" {
+		// Mark for remote deletion on next sync.
+		_, err := a.db.Exec(`UPDATE events SET sync_status='deleted' WHERE id = ?`, id)
+		return err
+	}
+	// Pure local event — remove immediately.
+	_, err := a.db.Exec(`DELETE FROM events WHERE id = ?`, id)
 	return err
 }
 
@@ -1123,7 +1166,9 @@ func (a *App) syncStateSet(key, value string) error {
 // Settings and autostart management
 
 type AppSettings struct {
-	AutoStart bool `json:"autoStart"`
+	AutoStart          bool   `json:"autoStart"`
+	GoogleClientID     string `json:"googleClientId,omitempty"`
+	GoogleClientSecret string `json:"googleClientSecret,omitempty"`
 }
 
 func defaultSettings() AppSettings {
@@ -1176,14 +1221,16 @@ func (a *App) saveSettings(cfg AppSettings) error {
 	return os.WriteFile(path, data, 0o644)
 }
 
-// GetSettings returns persisted app settings.
+// GetSettings returns persisted app settings. GoogleClientSecret is omitted from the response.
 func (a *App) GetSettings() (AppSettings, error) {
 	if a.settings == (AppSettings{}) {
 		if err := a.loadSettings(); err != nil {
 			return AppSettings{}, err
 		}
 	}
-	return a.settings, nil
+	safe := a.settings
+	safe.GoogleClientSecret = ""
+	return safe, nil
 }
 
 // UpdateSettings saves new settings and applies side effects like autostart.
@@ -1240,6 +1287,165 @@ start "" "%s"
 		return err
 	}
 	return nil
+}
+
+// UpdateInfo holds the result of an update check.
+type UpdateInfo struct {
+	CurrentVersion  string `json:"currentVersion"`
+	LatestVersion   string `json:"latestVersion"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	ReleaseURL      string `json:"releaseUrl"`
+	DownloadURL     string `json:"downloadUrl"` // direct .exe asset URL
+}
+
+// CheckForUpdate queries GitHub Releases for a newer version.
+// repo should be in "owner/repo" format, e.g. "JKH-ML/windows-calendar-widget".
+func (a *App) CheckForUpdate(repo string) (UpdateInfo, error) {
+	info := UpdateInfo{CurrentVersion: AppVersion}
+	if strings.TrimSpace(repo) == "" {
+		return info, errors.New("repo required")
+	}
+	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo)
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	if err != nil {
+		return info, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	client := &http.Client{Timeout: 8 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return info, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		// No releases published yet.
+		return info, nil
+	}
+	if resp.StatusCode >= 400 {
+		return info, fmt.Errorf("github api: %s", resp.Status)
+	}
+	var payload struct {
+		TagName string `json:"tag_name"`
+		HTMLURL string `json:"html_url"`
+		Assets  []struct {
+			Name               string `json:"name"`
+			BrowserDownloadURL string `json:"browser_download_url"`
+		} `json:"assets"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return info, err
+	}
+	latest := strings.TrimPrefix(payload.TagName, "v")
+	info.LatestVersion = latest
+	info.ReleaseURL = payload.HTMLURL
+	info.UpdateAvailable = isNewerVersion(latest, AppVersion)
+	// Find the .exe asset.
+	for _, asset := range payload.Assets {
+		if strings.HasSuffix(strings.ToLower(asset.Name), ".exe") {
+			info.DownloadURL = asset.BrowserDownloadURL
+			break
+		}
+	}
+	return info, nil
+}
+
+// DownloadAndInstall downloads the new exe to a temp path, writes a launcher
+// batch script that waits for the current process to exit, replaces the exe,
+// and restarts it — then quits the running app.
+func (a *App) DownloadAndInstall(downloadURL string) error {
+	if strings.TrimSpace(downloadURL) == "" {
+		return errors.New("download URL required")
+	}
+
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("find executable: %w", err)
+	}
+	exePath, err = filepath.EvalSymlinks(exePath)
+	if err != nil {
+		return fmt.Errorf("resolve exe path: %w", err)
+	}
+
+	// Download new exe to temp file alongside current exe.
+	tmpExe := exePath + ".new"
+	if err := downloadFile(downloadURL, tmpExe); err != nil {
+		return fmt.Errorf("download: %w", err)
+	}
+
+	// Write a batch script that waits for current PID to exit, swaps files, restarts.
+	pid := os.Getpid()
+	batPath := exePath + ".update.bat"
+	bat := fmt.Sprintf(`@echo off
+:wait
+tasklist /FI "PID eq %d" 2>NUL | find "%d" >NUL
+if not errorlevel 1 (
+    timeout /t 1 /nobreak >NUL
+    goto wait
+)
+move /Y "%s" "%s"
+start "" "%s"
+del "%%~f0"
+`, pid, pid, tmpExe, exePath, exePath)
+	if err := os.WriteFile(batPath, []byte(bat), 0o644); err != nil {
+		_ = os.Remove(tmpExe)
+		return fmt.Errorf("write update script: %w", err)
+	}
+
+	// Launch the batch script detached, then quit.
+	if err := launchDetached(batPath); err != nil {
+		_ = os.Remove(tmpExe)
+		_ = os.Remove(batPath)
+		return fmt.Errorf("launch update script: %w", err)
+	}
+
+	// Give the script a moment to start before we exit.
+	time.Sleep(500 * time.Millisecond)
+	os.Exit(0)
+	return nil
+}
+
+// downloadFile streams a URL to a local file path.
+func downloadFile(rawURL, dest string) error {
+	resp, err := http.Get(rawURL) //nolint:noctx // update download; short-lived
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("download failed: %s", resp.Status)
+	}
+	f, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(f, resp.Body)
+	return err
+}
+
+// isNewerVersion returns true if candidate is strictly greater than current.
+// Supports simple semver "MAJOR.MINOR.PATCH" comparison.
+func isNewerVersion(candidate, current string) bool {
+	parse := func(v string) [3]int {
+		var major, minor, patch int
+		fmt.Sscanf(v, "%d.%d.%d", &major, &minor, &patch)
+		return [3]int{major, minor, patch}
+	}
+	c := parse(candidate)
+	cur := parse(current)
+	for i := range c {
+		if c[i] > cur[i] {
+			return true
+		}
+		if c[i] < cur[i] {
+			return false
+		}
+	}
+	return false
 }
 
 // readStartupTarget extracts the target path from an existing autostart .bat.

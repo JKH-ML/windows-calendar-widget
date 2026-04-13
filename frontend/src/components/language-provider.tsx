@@ -72,6 +72,11 @@ const translations = {
     accountSubmitCode: 'Submit code',
     accountCodeHint:
       'Press "Connect Google Calendar" first to open the browser and get the code.',
+    accountClientConfig: 'OAuth Client',
+    accountClientConfigEdit: 'Edit',
+    accountClientConfigCancel: 'Cancel',
+    accountClientConfigSave: 'Save',
+    accountClientConfigRequired: 'Client ID and Secret are required.',
     syncResult: 'Sync Calendar',
     statusConnected: 'Google connected',
     statusDisconnected: 'Google not connected',
@@ -82,6 +87,27 @@ const translations = {
     statusConflictBadge: 'Conflict',
     statusConflictHint:
       'This event differs between local and Google. Decide which version to keep.',
+    dialogFieldAllDay: 'All day',
+    dialogFieldRecurrence: 'Repeat',
+    dialogFieldLocation: 'Location',
+    dialogFieldLocationPlaceholder: 'Add location',
+    dialogFieldAlert: 'Alert',
+    dialogFieldDescription: 'Description',
+    dialogFieldTitlePlaceholder: 'Event title',
+    recurrenceNone: 'Does not repeat',
+    recurrenceDaily: 'Daily',
+    recurrenceWeekly: 'Weekly',
+    recurrenceMonthly: 'Monthly',
+    recurrenceYearly: 'Yearly',
+    recurrenceCustom: 'Custom',
+    alertNone: 'None',
+    alert5m: '5 minutes before',
+    alert10m: '10 minutes before',
+    alert15m: '15 minutes before',
+    alert30m: '30 minutes before',
+    alert1h: '1 hour before',
+    alert1d: '1 day before',
+    alertCustom: 'Custom',
   },
   ko: {
     menuClose: '캘린더 위젯 닫기',
@@ -141,6 +167,11 @@ const translations = {
     accountSubmitCode: '코드 제출',
     accountCodeHint:
       '"Google Calendar 연동 시작"을 먼저 눌러 브라우저에서 코드를 받아주세요.',
+    accountClientConfig: 'OAuth 클라이언트',
+    accountClientConfigEdit: '수정',
+    accountClientConfigCancel: '취소',
+    accountClientConfigSave: '저장',
+    accountClientConfigRequired: 'Client ID와 Secret을 모두 입력해 주세요.',
     syncResult: '캘린더 동기화',
     statusConnected: 'Google 연동됨',
     statusDisconnected: 'Google 미연동',
@@ -151,6 +182,27 @@ const translations = {
     statusConflictBadge: '충돌',
     statusConflictHint:
       '이 이벤트가 로컬과 Google에 다르게 존재합니다. 어떤 값을 유지할지 결정해 주세요.',
+    dialogFieldAllDay: '종일',
+    dialogFieldRecurrence: '반복',
+    dialogFieldLocation: '위치',
+    dialogFieldLocationPlaceholder: '장소를 입력하세요',
+    dialogFieldAlert: '알림',
+    dialogFieldDescription: '설명',
+    dialogFieldTitlePlaceholder: '일정 제목',
+    recurrenceNone: '반복 안 함',
+    recurrenceDaily: '매일',
+    recurrenceWeekly: '매주',
+    recurrenceMonthly: '매월',
+    recurrenceYearly: '매년',
+    recurrenceCustom: '맞춤설정',
+    alertNone: '없음',
+    alert5m: '5분 전',
+    alert10m: '10분 전',
+    alert15m: '15분 전',
+    alert30m: '30분 전',
+    alert1h: '1시간 전',
+    alert1d: '1일 전',
+    alertCustom: '맞춤설정',
   },
 }
 
@@ -175,10 +227,26 @@ function detectSystemLanguage(): ResolvedLanguage {
   return lang.startsWith('ko') ? 'ko' : 'en'
 }
 
+const LANGUAGE_STORAGE_KEY = 'calendar-widget-language'
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('auto')
+  const [language, setLanguageState] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      if (saved === 'en' || saved === 'ko' || saved === 'auto') return saved
+    } catch {}
+    return 'auto'
+  })
   const [systemLanguage, setSystemLanguage] =
     useState<ResolvedLanguage>('en')
+
+  const setLanguage: React.Dispatch<React.SetStateAction<Language>> = (value) => {
+    setLanguageState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value
+      try { localStorage.setItem(LANGUAGE_STORAGE_KEY, next) } catch {}
+      return next
+    })
+  }
 
   useEffect(() => {
     setSystemLanguage(detectSystemLanguage())

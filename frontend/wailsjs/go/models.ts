@@ -2,6 +2,8 @@ export namespace main {
 	
 	export class AppSettings {
 	    autoStart: boolean;
+	    googleClientId?: string;
+	    googleClientSecret?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppSettings(source);
@@ -10,6 +12,8 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.autoStart = source["autoStart"];
+	        this.googleClientId = source["googleClientId"];
+	        this.googleClientSecret = source["googleClientSecret"];
 	    }
 	}
 	export class CalendarEvent {
@@ -60,6 +64,24 @@ export namespace main {
 	        this.googleUpdatedAt = source["googleUpdatedAt"];
 	        this.updatedAt = source["updatedAt"];
 	        this.createdAt = source["createdAt"];
+	    }
+	}
+	export class UpdateInfo {
+	    currentVersion: string;
+	    latestVersion: string;
+	    updateAvailable: boolean;
+	    releaseUrl: string;
+
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.updateAvailable = source["updateAvailable"];
+	        this.releaseUrl = source["releaseUrl"];
 	    }
 	}
 	export class GoogleSyncResult {

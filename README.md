@@ -25,13 +25,21 @@
 릴리즈: https://github.com/JKH-ML/windows-calendar-widget/releases
 
 1. 위 릴리즈 페이지에서 최신 exe를 다운로드합니다.
-2. exe를 `C:\Program Files\CalendarWidget`에 넣습니다(폴더가 없으면 만들어 주세요).
+2. exe를 `%LOCALAPPDATA%\CalendarWidget` 폴더에 넣습니다.  
+   (탐색기 주소창에 `%LOCALAPPDATA%\CalendarWidget` 입력 후 폴더 생성)
 3. exe를 실행하고 구글 로그인으로 동기화를 완료하세요.
+
+> **자동 업데이트 지원:** 새 버전이 출시되면 앱 상단에 알림이 표시되고, "지금 업데이트" 버튼 한 번으로 자동 업데이트됩니다.  
+> 자동 업데이트가 정상 동작하려면 `%LOCALAPPDATA%\CalendarWidget` 경로에 설치해야 합니다.
 
 ## Windows install (end users)
 
 Releases: https://github.com/JKH-ML/windows-calendar-widget/releases
 
 1. Download the latest exe from the releases page above.
-2. Put the exe in `C:\Program Files\CalendarWidget` (create the folder if it doesn’t exist).
+2. Place the exe in `%LOCALAPPDATA%\CalendarWidget`.  
+   (Type `%LOCALAPPDATA%\CalendarWidget` in Explorer’s address bar and create the folder)
 3. Run the exe and finish Google sign-in to sync.
+
+> **Auto-update supported:** When a new version is released, a banner appears at the top of the app. Click "Update now" to update automatically.  
+> Auto-update requires the exe to be placed in `%LOCALAPPDATA%\CalendarWidget`.

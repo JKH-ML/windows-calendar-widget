@@ -60,7 +60,7 @@ export default function CalendarNewEventDialog() {
     setEvents,
     api,
   } = useCalendarContext()
-  const { t, resolvedLanguage } = useLanguage()
+  const { t } = useLanguage()
 
   const baseStart = set(date, { hours: 13, minutes: 0, seconds: 0, milliseconds: 0 })
   const baseEnd = addHours(baseStart, 1)
@@ -143,9 +143,7 @@ export default function CalendarNewEventDialog() {
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={
-                        resolvedLanguage === 'ko' ? '일정 제목' : 'Event title'
-                      }
+                      placeholder={t('dialogFieldTitlePlaceholder')}
                       {...field}
                     />
                   </FormControl>
@@ -208,7 +206,7 @@ export default function CalendarNewEventDialog() {
                 name="allDay"
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-md border p-3">
-                    <FormLabel className="font-bold mb-0">종일</FormLabel>
+                    <FormLabel className="font-bold mb-0">{t('dialogFieldAllDay')}</FormLabel>
                     <FormControl>
                       <input
                         type="checkbox"
@@ -225,18 +223,18 @@ export default function CalendarNewEventDialog() {
                 name="recurrence"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold">반복</FormLabel>
+                    <FormLabel className="font-bold">{t('dialogFieldRecurrence')}</FormLabel>
                     <FormControl>
                       <select
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                         {...field}
                       >
-                        <option value="none">반복 안 함</option>
-                        <option value="daily">매일</option>
-                        <option value="weekly">매주</option>
-                        <option value="monthly">매월</option>
-                        <option value="yearly">매년</option>
-                        <option value="custom">맞춤설정</option>
+                        <option value="none">{t('recurrenceNone')}</option>
+                        <option value="daily">{t('recurrenceDaily')}</option>
+                        <option value="weekly">{t('recurrenceWeekly')}</option>
+                        <option value="monthly">{t('recurrenceMonthly')}</option>
+                        <option value="yearly">{t('recurrenceYearly')}</option>
+                        <option value="custom">{t('recurrenceCustom')}</option>
                       </select>
                     </FormControl>
                   </FormItem>
@@ -249,9 +247,9 @@ export default function CalendarNewEventDialog() {
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold">위치</FormLabel>
+                  <FormLabel className="font-bold">{t('dialogFieldLocation')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="장소를 입력하세요" {...field} />
+                    <Input placeholder={t('dialogFieldLocationPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -263,20 +261,20 @@ export default function CalendarNewEventDialog() {
               name="alert"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold">알림</FormLabel>
+                  <FormLabel className="font-bold">{t('dialogFieldAlert')}</FormLabel>
                   <FormControl>
                     <select
                       className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                       {...field}
                     >
-                      <option value="none">없음</option>
-                      <option value="5m">5분 전</option>
-                      <option value="10m">10분 전</option>
-                      <option value="15m">15분 전</option>
-                      <option value="30m">30분 전</option>
-                      <option value="1h">1시간 전</option>
-                      <option value="1d">1일 전</option>
-                      <option value="custom">맞춤설정</option>
+                      <option value="none">{t('alertNone')}</option>
+                      <option value="5m">{t('alert5m')}</option>
+                      <option value="10m">{t('alert10m')}</option>
+                      <option value="15m">{t('alert15m')}</option>
+                      <option value="30m">{t('alert30m')}</option>
+                      <option value="1h">{t('alert1h')}</option>
+                      <option value="1d">{t('alert1d')}</option>
+                      <option value="custom">{t('alertCustom')}</option>
                     </select>
                   </FormControl>
                 </FormItem>
@@ -288,7 +286,7 @@ export default function CalendarNewEventDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold">설명</FormLabel>
+                  <FormLabel className="font-bold">{t('dialogFieldDescription')}</FormLabel>
                   <FormControl>
                     <textarea
                       className="w-full rounded-md border bg-background px-3 py-2 text-sm min-h-[80px]"

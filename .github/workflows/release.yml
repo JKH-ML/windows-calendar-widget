@@ -40,8 +40,12 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
 
+      - name: Set version from tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
       - name: Build (Windows exe)
-        run: wails build -clean -platform windows/amd64
+        run: wails build -clean -platform windows/amd64 -ldflags "-X main.AppVersion=${{ env.VERSION }}"
 
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4

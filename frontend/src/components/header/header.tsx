@@ -4,6 +4,7 @@ import { HeaderThemeToggle } from './header-theme-toggle'
 import CalendarHeaderDateChevrons from '@/components/calendar/header/date/calendar-header-date-chevrons'
 import CalendarHeaderActionsAdd from '@/components/calendar/header/actions/calendar-header-actions-add'
 import CalendarHeaderActionsSync from '@/components/calendar/header/actions/calendar-header-actions-sync'
+import CalendarHeaderActionsMode from '@/components/calendar/header/actions/calendar-header-actions-mode'
 import { useCalendarContext } from '@/components/calendar/calendar-context'
 import HeaderMenu from './header-menu'
 import { useLanguage } from '../language-provider'
@@ -45,6 +46,7 @@ export default function Header({
         <CalendarHeaderDateChevrons />
       </div>
       <div className="flex items-center justify-end gap-2">
+        <CalendarHeaderActionsMode />
         <CalendarHeaderActionsSync
           onOpenAccountDialog={() => setAccountDialogOpen(true)}
         />
