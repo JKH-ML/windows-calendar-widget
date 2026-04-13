@@ -27,6 +27,9 @@ export default function CalendarDemo() {
   const [date, setDate] = useState<Date>(new Date())
   const [syncError, setSyncError] = useState<string | null>(null)
   const [googleConnected, setGoogleConnected] = useState<boolean | null>(null)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(() =>
+    localStorage.getItem('onboarding-dismissed') === 'true'
+  )
   const isFocusSyncing = useRef(false)
   const { resolvedLanguage, t } = useLanguage()
 
@@ -194,6 +197,51 @@ export default function CalendarDemo() {
           weekStartsOn={weekStartsOn}
           setWeekStartsOn={(v) => setWeekStartsOn(v)}
         />
+        {googleConnected === false && !onboardingDismissed && (
+          <div className="px-3 pt-2">
+            <div className="rounded-xl border bg-muted/30 px-4 py-3 flex gap-3 text-sm">
+              <div className="flex-1 flex flex-col gap-1">
+                <p className="font-semibold text-foreground">
+                  {resolvedLanguage === 'ko'
+                    ? '📅 Google Calendar 연동 없이도 일정을 직접 추가하고 관리할 수 있습니다.'
+                    : '📅 You can add and manage events directly without Google Calendar.'}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {resolvedLanguage === 'ko'
+                    ? 'Google Calendar와 연동하면 기존 일정을 자동으로 동기화할 수 있습니다. 우측 상단 메뉴 → 계정 설정에서 연동하세요.'
+                    : 'Connect Google Calendar to sync your existing events automatically. Go to menu → Account settings to connect.'}
+                </p>
+                <div className="flex gap-3 pt-1">
+                  <button
+                    type="button"
+                    className="text-xs text-primary underline hover:opacity-70 transition-opacity"
+                    onClick={() => BrowserOpenURL(HOMEPAGE_URL)}
+                  >
+                    {resolvedLanguage === 'ko' ? '앱 소개 보기 →' : 'Learn more →'}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline hover:opacity-70 transition-opacity"
+                    onClick={() => BrowserOpenURL(HOMEPAGE_URL + 'privacy.html')}
+                  >
+                    {resolvedLanguage === 'ko' ? '개인정보처리방침' : 'Privacy policy'}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm px-1 self-start"
+                onClick={() => {
+                  localStorage.setItem('onboarding-dismissed', 'true')
+                  setOnboardingDismissed(true)
+                }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         {syncError && (
           <div className="px-3 pt-2 flex items-center gap-2">
             <div className="flex-1">
@@ -214,37 +262,6 @@ export default function CalendarDemo() {
             <CalendarBody />
           </div>
         </div>
-
-        {googleConnected === false && (
-          <div className="rounded-2xl border bg-muted/30 px-5 py-4 flex flex-col gap-2 text-sm">
-            <p className="font-semibold text-foreground">
-              {resolvedLanguage === 'ko'
-                ? '📅 Google Calendar 연동 없이도 일정을 직접 추가하고 관리할 수 있습니다.'
-                : '📅 You can add and manage events directly without Google Calendar.'}
-            </p>
-            <p className="text-muted-foreground">
-              {resolvedLanguage === 'ko'
-                ? 'Google Calendar와 연동하면 기존 일정을 자동으로 동기화할 수 있습니다. 우측 상단 메뉴 → 계정 설정에서 연동하세요.'
-                : 'Connect Google Calendar to sync your existing events automatically. Go to menu → Account settings to connect.'}
-            </p>
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                className="text-xs text-primary underline hover:opacity-70 transition-opacity"
-                onClick={() => BrowserOpenURL(HOMEPAGE_URL)}
-              >
-                {resolvedLanguage === 'ko' ? '앱 소개 보기 →' : 'Learn more →'}
-              </button>
-              <button
-                type="button"
-                className="text-xs text-muted-foreground underline hover:opacity-70 transition-opacity"
-                onClick={() => BrowserOpenURL(HOMEPAGE_URL + 'privacy.html')}
-              >
-                {resolvedLanguage === 'ko' ? '개인정보처리방침' : 'Privacy policy'}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </CalendarProvider>
   )
