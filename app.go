@@ -1381,7 +1381,7 @@ func (a *App) DownloadAndInstall(downloadURL string) error {
 	batPath := exePath + ".update.bat"
 	bat := fmt.Sprintf(`@echo off
 :wait
-tasklist /FI "PID eq %d" 2>NUL | find "%d" >NUL
+powershell -NoProfile -Command "if (Get-Process -Id %d -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
 if not errorlevel 1 (
     timeout /t 1 /nobreak >NUL
     goto wait
@@ -1389,7 +1389,7 @@ if not errorlevel 1 (
 move /Y "%s" "%s"
 start "" "%s"
 del "%%~f0"
-`, pid, pid, tmpExe, exePath, exePath)
+`, pid, tmpExe, exePath, exePath)
 	if err := os.WriteFile(batPath, []byte(bat), 0o644); err != nil {
 		_ = os.Remove(tmpExe)
 		return fmt.Errorf("write update script: %w", err)
