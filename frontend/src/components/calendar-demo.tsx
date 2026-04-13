@@ -17,14 +17,37 @@ import { pushLocalChanges } from '@/lib/sync-client'
 import { useLanguage } from './language-provider'
 import { useHolidaySettings } from './hooks/use-holiday-settings'
 import StatusBanner from './status-banner'
+import { GoogleTokenInfo } from '../../wailsjs/go/main/App'
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
+
+const HOMEPAGE_URL = 'https://jkh-ml.github.io/windows-calendar-widget/'
 
 export default function CalendarDemo() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [mode, setMode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null)
   const isFocusSyncing = useRef(false)
   const { resolvedLanguage, t } = useLanguage()
+
+  // 구글 연결 상태 확인 (배너 표시용)
+  useEffect(() => {
+    GoogleTokenInfo()
+      .then((info) => setGoogleConnected(info.connected))
+      .catch(() => setGoogleConnected(false))
+  }, [])
+
+  useEffect(() => {
+    function handleConnected() { setGoogleConnected(true) }
+    function handleCleared() { setGoogleConnected(false) }
+    window.addEventListener('google-connected', handleConnected)
+    window.addEventListener('local-data-cleared', handleCleared)
+    return () => {
+      window.removeEventListener('google-connected', handleConnected)
+      window.removeEventListener('local-data-cleared', handleCleared)
+    }
+  }, [])
   const {
     countryCode,
     setCountryCode,
@@ -57,9 +80,7 @@ export default function CalendarDemo() {
   }
 
   useEffect(() => {
-    function handleClear() {
-      setEvents([])
-    }
+    function handleClear() { setEvents([]) }
     window.addEventListener('local-data-cleared', handleClear)
     return () => window.removeEventListener('local-data-cleared', handleClear)
   }, [])
@@ -181,6 +202,37 @@ export default function CalendarDemo() {
             <CalendarBody />
           </div>
         </div>
+
+        {googleConnected === false && (
+          <div className="rounded-2xl border bg-muted/30 px-5 py-4 flex flex-col gap-2 text-sm">
+            <p className="font-semibold text-foreground">
+              {resolvedLanguage === 'ko'
+                ? '📅 Google Calendar 연동 없이도 일정을 직접 추가하고 관리할 수 있습니다.'
+                : '📅 You can add and manage events directly without Google Calendar.'}
+            </p>
+            <p className="text-muted-foreground">
+              {resolvedLanguage === 'ko'
+                ? 'Google Calendar와 연동하면 기존 일정을 자동으로 동기화할 수 있습니다. 우측 상단 메뉴 → 계정 설정에서 연동하세요.'
+                : 'Connect Google Calendar to sync your existing events automatically. Go to menu → Account settings to connect.'}
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                className="text-xs text-primary underline hover:opacity-70 transition-opacity"
+                onClick={() => BrowserOpenURL(HOMEPAGE_URL)}
+              >
+                {resolvedLanguage === 'ko' ? '앱 소개 보기 →' : 'Learn more →'}
+              </button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline hover:opacity-70 transition-opacity"
+                onClick={() => BrowserOpenURL(HOMEPAGE_URL + 'privacy.html')}
+              >
+                {resolvedLanguage === 'ko' ? '개인정보처리방침' : 'Privacy policy'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </CalendarProvider>
   )
