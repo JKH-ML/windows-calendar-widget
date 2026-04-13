@@ -73,7 +73,10 @@ export default function CalendarDemo() {
       setSyncError(null)
     } catch (error: any) {
       console.warn('Sync and load failed', error)
-      setSyncError(t('statusSyncFailed'))
+      // Google 미연동 상태의 실패는 예상된 동작이므로 에러 배너 표시 안 함
+      if (googleConnected) {
+        setSyncError(t('statusSyncFailed'))
+      }
     } finally {
       syncingRef.current = false
     }
@@ -193,8 +196,18 @@ export default function CalendarDemo() {
           setWeekStartsOn={(v) => setWeekStartsOn(v)}
         />
         {syncError && (
-          <div className="px-3 pt-2">
-            <StatusBanner tone="error" message={syncError} />
+          <div className="px-3 pt-2 flex items-center gap-2">
+            <div className="flex-1">
+              <StatusBanner tone="error" message={syncError} />
+            </div>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm px-1"
+              onClick={() => setSyncError(null)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
           </div>
         )}
         <div className="rounded-2xl border bg-card shadow-2xl shadow-black/5">
